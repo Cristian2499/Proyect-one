@@ -1,54 +1,44 @@
+import { useParams } from "react-router-dom";
+
 const getState = ({ getStore, getActions, setStore }) => {
-	return {
-		store: {
-			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
-		},
-		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
-			},
+    return {
+        store: {},
+        actions: {
+            registerUser: async (userType, email, password, username, department, city) => {
+                console.log("Datos enviados:", userType, email, password, username, department, city);
 
-			getMessage: async () => {
-				try{
-					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
-					const data = await resp.json()
-					setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
-					return data;
-				}catch(error){
-					console.log("Error loading message from backend", error)
-				}
-			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+                const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:3001";
+                const endpoint = `${backendUrl}/api/register/${userType}`.replace(/([^:]\/)\/+/g, "$1");
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
+                console.log("URL del backend:", endpoint);
 
-				//reset the global store
-				setStore({ demo: demo });
-			}
-		}
-	};
+                try {
+                    const response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email, password, username, department, city }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error(`Error en la solicitud: ${response.status} ${response.statusText}`, errorData);
+                        return false;
+                    }
+
+                    const data = await response.json();
+                    console.log("Registro exitoso:", data);
+                    return true;
+                } catch (error) {
+                    console.error("Error en la solicitud:", error.message);
+                    return false;
+                }
+            }
+        }
+    };
 };
 
 export default getState;
+
+
